@@ -37,7 +37,7 @@ for row in range(9):
 
 selected_cell = None                                             #initialises selected cell variable, indicates no selection
 
-def draw_grid():                                                                              #same as set_screen(), without background
+def draw_grid():                                                 #same as set_screen(), without background
     for x in range(1, 10):
         pg.draw.line(screen, Grey, ((440+x*55), 545), ((440+x*55), 53), width=1)
         pg.draw.line(screen, Grey, (440, (51+x*55)), (934, (51+x*55)), width=1)
@@ -46,27 +46,27 @@ def draw_grid():                                                                
         pg.draw.line(screen, 'black', ((440+x*165), 545), ((440+x*165), 53), width=2)
         pg.draw.line(screen, 'black', (440, (51+x*165)), (934, (51+x*165)), width=2)
 
-def draw_numbers():                                                       #displays inputted numbers on screen in grid
+def draw_numbers():                                              #displays inputted numbers on screen in grid
     for row in range(9):
         for col in range(9):
-            if grid[row][col] != 0:                                             #only blits number if index is not empty
-                rect = cells[row][col]                                          #fetches necessary rect from 'cells' array
-                text = num_font.render(str(grid[row][col]), True, 'black')      #converts int to string for blit
-                text_rect = text.get_rect(center=rect.center)                   #creates rectangle around text and centres within selected cell's rect 
-                screen.blit(text, text_rect)                                    #blits number as string into center of rect
+            if grid[row][col] != 0:                                                                                                 #only blits number if index is not empty
+                rect = cells[row][col]                                                                                              #fetches necessary rect from 'cells' array
+                text = num_font.render(str(grid[row][col]), True, 'black')                                                          #converts int to string for blit
+                text_rect = text.get_rect(center=rect.center)                                                                       #creates rectangle around text and centres within selected cell's rect 
+                screen.blit(text, text_rect)                                                                                        #blits number as string into center of rect
 
-def draw_highlight():                           #function for highlighting selected cell
-    if selected_cell:                           #if selected_cell == True
-        row, col = selected_cell                #defines row and column as tuple of selected cell
-        rect = cells[row][col]                  #finds rect at row and col of cells array
-        pg.draw.rect(screen, Grey, rect)        #draws grey square at rect
+def draw_highlight():                                                                                                               #function for highlighting selected cell
+    if selected_cell:                                                                                                               #if selected_cell == True
+        row, col = selected_cell                                                                                                    #defines row and column as tuple of selected cell
+        rect = cells[row][col]                                                                                                      #finds rect at row and col of cells array
+        pg.draw.rect(screen, Grey, rect)                                                                                            #draws grey square at rect
 
-def get_selected_cell(pos):                                      #find position of selected cell
+def get_selected_cell(pos):                                                                                                         #find position of selected cell
     for row in range(9):
         for col in range(9):
-            if cells[row][col].collidepoint(pos):                #if mouse cursor collides with rect at specified row and column
-                return row, col                                  #return row and column to be used in draw_highlight
-    return None                                                  #if no cell selected then return nothing
+            if cells[row][col].collidepoint(pos):                                                                                   #if mouse cursor collides with rect at specified row and column
+                return row, col                                                                                                     #return row and column to be used in draw_highlight
+    return None                                                                                                                     #if no cell selected then return nothing
 
 class Button:                                                                                                                       #creating class 'Button'
     def __init__(self, x, y, w, h, text, font, bg_color, text_color, value=None, hover_color=None, label_pos=None):                 #initialising class and specifying parameters
@@ -245,6 +245,5 @@ while run:                                                                      
     pg.Surface.blit(screen, lmaccess, (180,24))
     clear.draw(screen)                                 
     pg.display.flip()                                                                           #updates display
-
 
 pg.quit()                                                                                       #quits game
