@@ -19,7 +19,7 @@ lmaccess = pg.image.load('LightModeAccess.png').convert_alpha()
 lmaccess = pg.transform.scale(lmaccess, (30,30))
 lmerase = pg.image.load('LightModeErase.png').convert_alpha()
 lmerase = pg.transform.scale(lmerase, (30,30))
-lmsud = pg.image.load('LightModeSudoku.png').convert_alpha()
+lmsud = pg.image.load('LightModeNew.png').convert_alpha()
 lmsud = pg.transform.scale(lmsud, (30,30))
 
 run = True                                                       #arbitrary variable to set running state
@@ -245,5 +245,6 @@ while run:                                                                      
     pg.Surface.blit(screen, lmaccess, (180,24))
     clear.draw(screen)                                 
     pg.display.flip()                                                                           #updates display
+
 
 pg.quit()                                                                                       #quits game
