@@ -2,11 +2,15 @@ import pygame as pg                                              #import pg libr
 import sys                                                       #import system library
 from Constants import *                                          #import all variables from 'Constants.py'
 import random                                                    #import random library
+pg.mixer.init()
+pg.mixer.music.load('pitch2.mp3')
+pg.mixer.music.load('pitch3.mp3')
 
 pg.font.init()                                                   #initialising num_font
 num_font = pg.font.SysFont('Helvetica.ttf', 40)
 op_font = pg.font.SysFont('simsum', 30)
 but_font = pg.font.SysFont('simsum', 25)
+win_font = pg.font.SysFont('simsum', 100)
 
 WIDTH, HEIGHT = 1000, 600
 screen = pg.display.set_mode((WIDTH, HEIGHT))                    #setting display size
@@ -28,7 +32,9 @@ play_area = pg.Rect(440, 53, 495, 495)                           #defines what a
 
 grid = [['' for _ in range(9)] for _ in range(9)]                #creates empty 9x9 2d array for tracking inputs
 
-cells = [[None for _ in range(9)] for _ in range(9)]             #creates empty 9x9 2d array for tracking rects within cells
+cells = [['' for _ in range(9)] for _ in range(9)]               #creates empty 9x9 2d array for tracking rects within cells
+
+fixed = [[False for _ in range(9)] for _ in range(9)]
 
 for row in range(9):
     for col in range(9):
@@ -38,7 +44,7 @@ for row in range(9):
 
 selected_cell = None                                             #initialises selected cell variable, indicates no selection
 
-def draw_grid():                                                                              #same as set_screen(), without background
+def draw_grid():                                                 #same as set_screen(), without background
     for x in range(1, 10):
         pg.draw.line(screen, Grey, ((440+x*55), 545), ((440+x*55), 53), width=1)
         pg.draw.line(screen, Grey, (440, (51+x*55)), (934, (51+x*55)), width=1)
@@ -47,14 +53,14 @@ def draw_grid():                                                                
         pg.draw.line(screen, 'black', ((440+x*165), 545), ((440+x*165), 53), width=2)
         pg.draw.line(screen, 'black', (440, (51+x*165)), (934, (51+x*165)), width=2)
 
-def draw_numbers():                                                       #displays inputted numbers on screen in grid
+def draw_numbers():                                                             #displays inputted numbers on screen in grid
     for row in range(9):
         for col in range(9):
-            if grid[row][col] != 0:                                             #only blits number if index is not empty
-                rect = cells[row][col]                                          #fetches necessary rect from 'cells' array
-                text = num_font.render(str(grid[row][col]), True, 'black')      #converts int to string for blit
-                text_rect = text.get_rect(center=rect.center)                   #creates rectangle around text and centres within selected cell's rect 
-                screen.blit(text, text_rect)                                    #blits number as string into center of rect
+            if grid[row][col] != 0:                                                                                                                       #only blits number if index is not empty
+                rect = cells[row][col]                                                                                                                    #fetches necessary rect from 'cells' array
+                text = num_font.render(str(grid[row][col]), True, 'black') if fixed[row][col] else num_font.render(str(grid[row][col]), True, 'blue')     #converts int to string for blit
+                text_rect = text.get_rect(center=rect.center)                                                                                             #creates rectangle around text and centres within selected cell's rect 
+                screen.blit(text, text_rect)                                                                                                              #blits number as string into center of rect
 
 def draw_highlight():                           #function for highlighting selected cell
     if selected_cell:                           #if selected_cell == True
@@ -123,7 +129,6 @@ clear = Button(240, 20, 100, 40, 'Clear', op_font, 'white', 'black', hover_color
 erase = Button(100, 400, 60, 60, '', num_font, Blue, 'black', 0, hover_color = Grey)
 new = Button(260, 400, 60, 60, '', num_font, Blue, 'black', 0, hover_color = Grey)
 
-
 def generate(board):                                                         #generating random valid board with shuffled numbers
     for row in range(9):
         for col in range(9):
@@ -141,7 +146,7 @@ def generate(board):                                                         #ge
     return True                                                              #returns True when board is generated
 
 def valid(board, number, row, col):
-    if number in board[row] == True:                                         #returns False if same number found in same row 
+    if number in [board[row][x] for x in range(9)]:                          #returns False if same number found in same row 
         return False
     elif number in [board[x][col] for x in range(9)]:                        #returns False if same number found in same column
         return False
@@ -168,30 +173,43 @@ def solutions(board):
                     if valid(board, number, row, col):                                          #if valid, fill number in cell
                         board[row][col] = number
                         sol = sol + solutions(board)
-                        board[row][col] = 0
+                        board[row][col] = 60
                         if 1 < sol: 
                             return sol                                                          #breaks loop and returns amount of solutions
                 return sol
     return 1                                                                                    #returns '1' to indicate 1 unique solution found
 
-def partial_board(board, cells=None):                                                             #function to create puzzle by removing certain cells
+def partial_board(board, cells=None):                                                           #function to create puzzle by removing certain cells
+    fixed =  [[True for _ in range(9)] for _ in range(9)]
     while cells > 0:
         row = random.randint(0, 8)                                                              #choose random row
         col = random.randint(0, 8)                                                              #choose random function
-        if board[row][col] != 0:                                                                #only acts if cell contains number
-            board[row][col] = 0                                                                 #delete number from cell
-            cells = cells - 1
-        else:
+        if board[row][col] == 0:                                                                #only acts if cell contains numbe
             continue                                                                            #if cell is empty, choose another
-    return board                                                                                #return new board with deleted cells
+        board[row][col] = 0
+        fixed[row][col] = False
+        cells = cells - 1
+    return board, fixed                                                                         #return new board with deleted cells
 
 complete_board = board_setup()
-grid = partial_board(complete_board, cells = 40)                                                #transfers puzzle to 'grid' variable, so user can interact while program runs
+
+grid, fixed = partial_board(complete_board, cells = 45)                                         #transfers puzzle to 'grid' variable, so user can interact while program runs
+print(complete_board)
+
+def win_screen():
+    if grid == complete_board: 
+        pg.draw.rect(screen, (102, 131, 176), pg.Rect(185, 86, 630, 430), border_radius=25)
+        pg.draw.rect(screen, 'white', pg.Rect(200, 100, 600, 400), border_radius=25)
+        draw_text('You win!', win_font, 'black', 350, 200) 
+        newgame = Button(260, 360, 180, 60, 'New Game', op_font, 'white', 'black', hover_color = Grey)
+        quit = Button(560, 360, 180, 60, 'Quit', op_font, 'white', 'black', hover_color = Grey)
+        newgame.draw(screen)
+        quit.draw(screen)
 
 screen.fill(LightMode)                                                                          #fill background with pre-defined colour
 while run:                                                                                      #only iterates while running
     pos = pg.mouse.get_pos()                                                                    #get mouse position on screen
-    for event in pg.event.get():                                                    
+    for event in pg.event.get():                                                  
         if event.type == pg.QUIT:                                                               #if user quits, end program
             run = False
             pg.quit()
@@ -199,26 +217,29 @@ while run:                                                                      
 
         elif event.type == pg.MOUSEBUTTONDOWN and play_area.collidepoint(pos):                  #if user clicks while on grid then retrive row and col
             selected_cell = get_selected_cell(pos)
+            pg.mixer.music.load('pitch1.mp3')
+            pg.mixer.music.play()
 
         elif event.type == pg.KEYDOWN and event.unicode.isdigit() and selected_cell:            #detects if user inputs number
             row, col = selected_cell                                                            
-            grid[row][col] = int(event.unicode)                                                 #event.unicode represents inputted number, stores in grid array 
+            if not fixed[row][col]:
+                grid[row][col] = int(event.unicode)                                             #event.unicode represents inputted number, stores in grid array 
 
         for button in [one, two, three, four, five, six, seven, eight, nine]:
             if button.is_clicked(event) and selected_cell:
                 row, col = selected_cell
-                grid[row][col] = int(button.text)
+                if not fixed[row][col]:
+                    grid[row][col] = int(button.text)
         
-        if access.is_clicked(event) and selected_cell:
-            row, col = selected_cell
-            grid[row][col] = int(button.text)
+        if access.is_clicked(event):
+            pg.draw.rect(screen, (102, 131, 176), pg.Rect(185, 86, 630, 430), border_radius=25)
+            pg.draw.rect(screen, 'white', pg.Rect(200, 100, 600, 400), border_radius=25)
         
-        if clear.is_clicked(event) and selected_cell:
-            grid = [['' for _ in range(9)] for _ in range(9)] 
+        if clear.is_clicked(event):
+            grid = [['' for _ in range(9)] for _ in range(9)]
             screen.fill(LightMode)
-            draw_grid
+            draw_numbers
 
-    print(grid)
     pg.draw.rect(screen, LightMode, pg.Rect(440, 53, 495, 495))                                 #redraws background of grid for each frame/iteration                                        
     draw_highlight()                                                                            
     draw_grid()                                                                                 #redraws grid separately from background so overlay highlighted cells
@@ -244,7 +265,7 @@ while run:                                                                      
     pg.Surface.blit(screen, lmsud, (275, 414))
     access.draw(screen) 
     pg.Surface.blit(screen, lmaccess, (180,24))
-    clear.draw(screen)                                 
+    clear.draw(screen)    
+    win_screen()                   
     pg.display.flip()                                                                           #updates display
-
 pg.quit()                                                                                       #quits game
