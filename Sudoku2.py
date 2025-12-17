@@ -2,6 +2,7 @@ import pygame as pg                                              #import pg libr
 import sys                                                       #import system library
 from Constants import *                                          #import all variables from 'Constants.py'
 import random                                                    #import random library
+import copy
 pg.mixer.init()
 pg.mixer.music.load('pitch2.mp3')
 pg.mixer.music.load('pitch3.mp3')
@@ -11,6 +12,7 @@ num_font = pg.font.SysFont('Helvetica.ttf', 40)
 op_font = pg.font.SysFont('simsum', 30)
 but_font = pg.font.SysFont('simsum', 25)
 win_font = pg.font.SysFont('simsum', 100)
+dif_font = pg.font.SysFont('simsum', 60)
 
 WIDTH, HEIGHT = 1000, 600
 screen = pg.display.set_mode((WIDTH, HEIGHT))                    #setting display size
@@ -24,8 +26,27 @@ lmaccess = pg.image.load('LightModeAccess.png').convert_alpha()
 lmaccess = pg.transform.scale(lmaccess, (30,30))
 lmerase = pg.image.load('LightModeErase.png').convert_alpha()
 lmerase = pg.transform.scale(lmerase, (30,30))
-lmsud = pg.image.load('LightModeNew.png').convert_alpha()
-lmsud = pg.transform.scale(lmsud, (30,30))
+lmnew = pg.image.load('LightModeNew.png').convert_alpha()
+lmnew = pg.transform.scale(lmnew, (30,30))
+lmtoggle = pg.image.load('LightModeToggle.png').convert_alpha()
+lmtoggle = pg.transform.scale(lmtoggle, (70,35))
+lmexit = pg.image.load('LightModeExit.png').convert_alpha()
+lmexit = pg.transform.scale(lmexit, (30,30))
+lmstrain = pg.image.load('LightModeStrain.png').convert_alpha()
+lmstrain = pg.transform.scale(lmstrain, (30,30))
+dmtoggle = pg.image.load('DarkModeToggle.png').convert_alpha()
+dmtoggle = pg.transform.scale(dmtoggle, (70,35))
+dmaccess = pg.image.load('DarkModeAccess.png').convert_alpha()
+dmaccess = pg.transform.scale(dmaccess, (30,30))
+dmerase = pg.image.load('DarkModeErase.png').convert_alpha()
+dmerase = pg.transform.scale(dmerase, (30,30))
+dmnew = pg.image.load('DarkModeNew.png').convert_alpha()
+dmnew = pg.transform.scale(dmnew, (30,30))
+dmexit = pg.image.load('DarkModeExit.png').convert_alpha()
+dmexit = pg.transform.scale(dmexit, (30,30))
+dmstrain = pg.image.load('DarkModeStrain.png').convert_alpha()
+dmstrain = pg.transform.scale(dmstrain, (30,30))
+
 
 run = True                                                       #arbitrary variable to set running state
 play_area = pg.Rect(440, 53, 495, 495)                           #defines what area user can interact with (whole grid)
@@ -44,8 +65,8 @@ for row in range(9):
 
 selected_cell = None                                             #initialises selected cell variable, indicates no selection
 
-def draw_grid():                                                 #same as set_screen(), without background
-    for x in range(1, 10):
+def draw_grid_light():                                                 #same as set_screen(), without background
+    for x in range(1, 9):
         pg.draw.line(screen, Grey, ((440+x*55), 545), ((440+x*55), 53), width=1)
         pg.draw.line(screen, Grey, (440, (51+x*55)), (934, (51+x*55)), width=1)
     pg.draw.rect(screen, 'black', pg.Rect(440, 53, 495, 495), width=3)
@@ -53,14 +74,32 @@ def draw_grid():                                                 #same as set_sc
         pg.draw.line(screen, 'black', ((440+x*165), 545), ((440+x*165), 53), width=2)
         pg.draw.line(screen, 'black', (440, (51+x*165)), (934, (51+x*165)), width=2)
 
-def draw_numbers():                                                             #displays inputted numbers on screen in grid
+def draw_grid_dark():                                                 #same as set_screen(), without background
+    for x in range(1, 9):
+        pg.draw.line(screen, (148, 148, 148), ((440+x*55), 545), ((440+x*55), 53), width=1)
+        pg.draw.line(screen, (148, 148, 148), (440, (51+x*55)), (934, (51+x*55)), width=1)
+    pg.draw.rect(screen, 'white', pg.Rect(440, 53, 495, 495), width=3)
+    for x in range(1, 3):
+        pg.draw.line(screen, 'white', ((440+x*165), 545), ((440+x*165), 53), width=2)
+        pg.draw.line(screen, 'white', (440, (51+x*165)), (934, (51+x*165)), width=2)
+
+def draw_numbers_light():                                                             #displays inputted numbers on screen in grid
     for row in range(9):
         for col in range(9):
-            if grid[row][col] != 0:                                                                                                                       #only blits number if index is not empty
-                rect = cells[row][col]                                                                                                                    #fetches necessary rect from 'cells' array
-                text = num_font.render(str(grid[row][col]), True, 'black') if fixed[row][col] else num_font.render(str(grid[row][col]), True, 'blue')     #converts int to string for blit
-                text_rect = text.get_rect(center=rect.center)                                                                                             #creates rectangle around text and centres within selected cell's rect 
-                screen.blit(text, text_rect)                                                                                                              #blits number as string into center of rect
+                if grid[row][col] != 0:                                                                                                                 #only blits number if index is not empty
+                    rect = cells[row][col]                                                                                                                    #fetches necessary rect from 'cells' array
+                    text = num_font.render(str(grid[row][col]), True, 'black') if fixed[row][col] else num_font.render(str(grid[row][col]), True, 'blue')     #converts int to string for blit
+                    text_rect = text.get_rect(center=rect.center)                                                                                             #creates rectangle around text and centres within selected cell's rect 
+                    screen.blit(text, text_rect)  
+
+def draw_numbers_dark():                                                             #displays inputted numbers on screen in grid
+    for row in range(9):
+        for col in range(9):
+                if grid[row][col] != 0:                                                                                                                 #only blits number if index is not empty
+                    rect = cells[row][col]                                                                                                                    #fetches necessary rect from 'cells' array
+                    text = num_font.render(str(grid[row][col]), True, 'white') if fixed[row][col] else num_font.render(str(grid[row][col]), True, (132, 142, 232))     #converts int to string for blit
+                    text_rect = text.get_rect(center=rect.center)                                                                                             #creates rectangle around text and centres within selected cell's rect 
+                    screen.blit(text, text_rect)                                                                                                                    #blits number as string into center of rect
 
 def draw_highlight():                           #function for highlighting selected cell
     if selected_cell:                           #if selected_cell == True
@@ -128,6 +167,11 @@ access = Button(20, 20, 200, 40, 'Accessibility', op_font, 'white', 'black', hov
 clear = Button(240, 20, 100, 40, 'Clear', op_font, 'white', 'black', hover_color = Grey)
 erase = Button(100, 400, 60, 60, '', num_font, Blue, 'black', 0, hover_color = Grey)
 new = Button(260, 400, 60, 60, '', num_font, Blue, 'black', 0, hover_color = Grey)
+easy = Button(230, 350, 140, 80, 'Easy', num_font, (228, 231, 237), 'black', 0, hover_color = Grey)
+medium = Button(430, 350, 140, 80, 'Medium', num_font, (228, 231, 237), 'black', 0, hover_color = Grey)
+hard = Button(630, 350, 140, 80, 'Hard', num_font, (228, 231, 237), 'black', 0, hover_color = Grey)
+exit = Button(720, 120, 60, 60, '', num_font, (247, 245, 237), 'black', 0, hover_color = Grey)
+strain_toggle = Button(250, 200, 280, 60, ' Reduce Eye Strain', op_font, 'white', 'black', hover_color = Grey, label_pos = 'left')
 
 def generate(board):                                                         #generating random valid board with shuffled numbers
     for row in range(9):
@@ -192,12 +236,10 @@ def partial_board(board, cells=None):                                           
     return board, fixed                                                                         #return new board with deleted cells
 
 complete_board = board_setup()
+solution = copy.deepcopy(complete_board)
 
-grid, fixed = partial_board(complete_board, cells = 45)                                         #transfers puzzle to 'grid' variable, so user can interact while program runs
-print(complete_board)
-
-def win_screen():
-    if grid == complete_board: 
+def win_screen_light():
+    if grid == solution: 
         pg.draw.rect(screen, (102, 131, 176), pg.Rect(185, 86, 630, 430), border_radius=25)
         pg.draw.rect(screen, 'white', pg.Rect(200, 100, 600, 400), border_radius=25)
         draw_text('You win!', win_font, 'black', 350, 200) 
@@ -205,9 +247,102 @@ def win_screen():
         quit = Button(560, 360, 180, 60, 'Quit', op_font, 'white', 'black', hover_color = Grey)
         newgame.draw(screen)
         quit.draw(screen)
+        if newgame.is_clicked(event): 
+            select = False
+            difficulty()
+        if quit.is_clicked(event):
+            pg.quit()
+
+def win_screen_dark():
+    if grid == solution: 
+        pg.draw.rect(screen, (102, 131, 176), pg.Rect(185, 86, 630, 430), border_radius=25)
+        pg.draw.rect(screen, DarkMode, pg.Rect(200, 100, 600, 400), border_radius=25)
+        draw_text('You win!', win_font, 'white', 350, 200) 
+        newgame = Button(260, 360, 180, 60, 'New Game', op_font, DarkMode, 'white', hover_color = Grey)
+        quit = Button(560, 360, 180, 60, 'Quit', op_font, DarkMode, 'white', hover_color = Grey)
+        newgame.draw(screen)
+        quit.draw(screen)
+        if newgame.is_clicked(event): 
+            select = False
+            difficulty()
+
+def difficulty():
+    pg.draw.rect(screen, (102, 131, 176), pg.Rect(185, 86, 630, 430), border_radius=25)
+    pg.draw.rect(screen, 'white', pg.Rect(200, 100, 600, 400), border_radius=25)
+    draw_text('Select Your Difficulty', dif_font, 'black', 300, 200) 
+    easy.draw(screen)
+    medium.draw(screen)
+    hard.draw(screen)
+
+def draw_rect_alpha(surface, color, rect):
+    shape_surf = pg.Surface(pg.Rect(rect).size, pg.SRCALPHA)
+    pg.draw.rect(shape_surf, color, shape_surf.get_rect())
+    surface.blit(shape_surf, rect)
+
+select = False
+access_menu = False
+
+toggle_area = pg.draw.rect(screen, LightMode, pg.Rect(650, 10, 70, 35))
+
+theme = LightMode
+strain = False
+
+def draw_png(theme):
+    pg.draw.rect(screen, theme, pg.Rect(100, 469, 60, 50))
+    pg.draw.rect(screen, theme, pg.Rect(270, 469, 60, 50))
+    pg.draw.rect(screen, theme, pg.Rect(750, 0, 200, 50))
+    pg.draw.rect(screen, theme, pg.Rect(650, 10, 70, 35))
+
+dark_mode = False
+bg_change = False 
 
 screen.fill(LightMode)                                                                          #fill background with pre-defined colour
-while run:                                                                                      #only iterates while running
+while run:                                 #redraws background of grid for each frame/iteration                                                                                                                  
+    draw_png(theme)
+    if dark_mode == False:
+            pg.draw.rect(screen, LightMode, pg.Rect(440, 53, 495, 495))
+            draw_highlight()          
+            draw_numbers_light()
+            draw_grid_light()     
+            draw_text('Erase', but_font, 'black', 106, 470)
+            draw_text('New', but_font, 'black', 273, 468) 
+            draw_text('Accessible Sudoku', op_font, 'black', 750, 20)
+            pg.Surface.blit(screen, lmtoggle, (650, 10))
+            erase.draw(screen) 
+            pg.Surface.blit(screen, lmerase, (114,413))
+            new.draw(screen) 
+            pg.Surface.blit(screen, lmnew, (275, 414)) 
+    elif dark_mode == True:
+        pg.draw.rect(screen, DarkMode, pg.Rect(440, 53, 495, 495))
+        draw_highlight()      
+        draw_numbers_dark()
+        draw_grid_dark()
+        draw_text('Erase', but_font, 'white', 106, 470)
+        draw_text('New', but_font, 'white', 273, 468) 
+        draw_text('Accessible Sudoku', op_font, 'white', 750, 20)
+        pg.Surface.blit(screen, dmtoggle, (650, 10))
+        erase.draw(screen)
+        pg.Surface.blit(screen, dmerase, (114,413)) 
+        new.draw(screen) 
+        pg.Surface.blit(screen, dmnew, (275, 414))
+    one.draw(screen)          
+    two.draw(screen)          
+    three.draw(screen) 
+    four.draw(screen)
+    five.draw(screen)
+    six.draw(screen)
+    seven.draw(screen)
+    eight.draw(screen)
+    nine.draw(screen)
+    access.draw(screen) 
+    pg.Surface.blit(screen, lmaccess, (180,24))
+    clear.draw(screen)
+    if dark_mode == False: 
+        win_screen_light()
+    else:
+        win_screen_dark()
+    if select == False:
+        difficulty()                                                                            #only iterates while running
     pos = pg.mouse.get_pos()                                                                    #get mouse position on screen
     for event in pg.event.get():                                                  
         if event.type == pg.QUIT:                                                               #if user quits, end program
@@ -219,53 +354,117 @@ while run:                                                                      
             selected_cell = get_selected_cell(pos)
             pg.mixer.music.load('pitch1.mp3')
             pg.mixer.music.play()
-
+            
         elif event.type == pg.KEYDOWN and event.unicode.isdigit() and selected_cell:            #detects if user inputs number
             row, col = selected_cell                                                            
             if not fixed[row][col]:
                 grid[row][col] = int(event.unicode)                                             #event.unicode represents inputted number, stores in grid array 
-
+        
         for button in [one, two, three, four, five, six, seven, eight, nine]:
             if button.is_clicked(event) and selected_cell:
                 row, col = selected_cell
                 if not fixed[row][col]:
                     grid[row][col] = int(button.text)
+            elif one.is_clicked(event) or four.is_clicked(event) or seven.is_clicked(event) and selected_cell:
+                pg.mixer.music.load('pitch1.mp3')
+                pg.mixer.music.play()
+            elif two.is_clicked(event) or five.is_clicked(event) or eight.is_clicked(event) and selected_cell:
+                pg.mixer.music.load('pitch2.mp3')
+                pg.mixer.music.play()
+            elif three.is_clicked(event) or six.is_clicked(event) or nine.is_clicked(event) and selected_cell:
+                pg.mixer.music.load('pitch3.mp3')
+                pg.mixer.music.play()
+
+                
+        if erase.is_clicked(event) and selected_cell:
+            row, col = selected_cell
+            if not fixed[row][col]:
+                grid[row][col] = 0
         
+        if event.type == pg.KEYDOWN and event.key == pg.K_BACKSPACE and selected_cell:
+            row, col = selected_cell
+            if not fixed[row][col]:
+                grid[row][col] = 0
+
+        if select == False:
+            difficulty()
+            if easy.is_clicked(event):
+                grid, fixed = partial_board(complete_board, cells = 25)                                         #transfers puzzle to 'grid' variable, so user can interact while program runs
+                default = copy.deepcopy(grid)
+                select = True
+                screen.fill(theme)
+
+            elif medium.is_clicked(event):
+                grid, fixed = partial_board(complete_board, cells = 35)                                         #transfers puzzle to 'grid' variable, so user can interact while program runs
+                default = copy.deepcopy(grid)
+                select = True
+                screen.fill(theme)
+
+            elif hard.is_clicked(event):
+                grid, fixed = partial_board(complete_board, cells = 45)                                         #transfers puzzle to 'grid' variable, so user can interact while program runs
+                default = copy.deepcopy(grid)
+                select = True
+                screen.fill(theme)
+
+        if clear.is_clicked(event):
+            if dark_mode == False:
+                screen.fill(LightMode)
+                grid = copy.deepcopy(default)
+            else:
+                screen.fill(DarkMode)
+                grid = copy.deepcopy(default)
+
         if access.is_clicked(event):
+            access_menu = True
+
+        if strain_toggle.is_clicked(event):
+            strain = not strain
+
+        if event.type == pg.MOUSEBUTTONDOWN and toggle_area.collidepoint(pos):
+            bg_change = not bg_change
+            
+            if bg_change == True:
+                    screen.fill(DarkMode)
+                    pg.draw.rect(screen, DarkMode, pg.Rect(100, 469, 60, 50))
+                    pg.draw.rect(screen, DarkMode, pg.Rect(100, 469, 60, 50))
+                    pg.draw.rect(screen, DarkMode, pg.Rect(650, 10, 70, 35))
+                    pg.draw.rect(screen, DarkMode, pg.Rect(750, 0, 200, 50))
+                    theme = DarkMode
+                    dark_mode = True
+            else:
+                    screen.fill(LightMode)
+                    pg.draw.rect(screen, LightMode, pg.Rect(100, 469, 60, 50))
+                    pg.draw.rect(screen, LightMode, pg.Rect(100, 469, 60, 50))
+                    pg.draw.rect(screen, LightMode, pg.Rect(650, 10, 70, 35))
+                    pg.draw.rect(screen, LightMode, pg.Rect(750, 0, 200, 50))
+                    theme = LightMode
+                    dark_mode = False
+
+    if access_menu == True:
+        if dark_mode == False:
             pg.draw.rect(screen, (102, 131, 176), pg.Rect(185, 86, 630, 430), border_radius=25)
             pg.draw.rect(screen, 'white', pg.Rect(200, 100, 600, 400), border_radius=25)
-        
-        if clear.is_clicked(event):
-            grid = [['' for _ in range(9)] for _ in range(9)]
-            screen.fill(LightMode)
-            draw_numbers
+            exit.draw(screen)
+            pg.Surface.blit(screen, lmexit, (734, 135))
+            strain_toggle.draw(screen)
+            pg.Surface.blit(screen, lmstrain, (470, 215))
 
-    pg.draw.rect(screen, LightMode, pg.Rect(440, 53, 495, 495))                                 #redraws background of grid for each frame/iteration                                        
-    draw_highlight()                                                                            
-    draw_grid()                                                                                 #redraws grid separately from background so overlay highlighted cells
-    draw_numbers()
-    pg.draw.rect(screen, LightMode, pg.Rect(100, 469, 60, 50))
-    draw_text('Erase', but_font, 'black', 106, 470)
-    pg.draw.rect(screen, LightMode, pg.Rect(270, 469, 60, 50))
-    draw_text('New', but_font, 'black', 273, 468) 
-    pg.draw.rect(screen, LightMode, pg.Rect(750, 0, 200, 50))
-    draw_text('Accessible Sudoku', op_font, 'black', 750, 20) 
-    one.draw(screen)          
-    two.draw(screen)          
-    three.draw(screen) 
-    four.draw(screen)
-    five.draw(screen)
-    six.draw(screen)
-    seven.draw(screen)
-    eight.draw(screen)
-    nine.draw(screen)
-    erase.draw(screen)
-    pg.Surface.blit(screen, lmerase, (114,413)) 
-    new.draw(screen) 
-    pg.Surface.blit(screen, lmsud, (275, 414))
-    access.draw(screen) 
-    pg.Surface.blit(screen, lmaccess, (180,24))
-    clear.draw(screen)    
-    win_screen()                   
+        else:
+            pg.draw.rect(screen, (102, 131, 176), pg.Rect(185, 86, 630, 430), border_radius=25)
+            pg.draw.rect(screen, DarkMode, pg.Rect(200, 100, 600, 400), border_radius=25)
+            exit.draw(screen)
+            pg.Surface.blit(screen, lmexit, (734, 135))
+            strain_toggle.draw(screen)
+            pg.Surface.blit(screen, lmstrain, (470, 215))
+
+        if exit.is_clicked(event):
+            access_menu = False
+            if dark_mode == False:
+                screen.fill(LightMode)
+            else:
+                screen.fill(DarkMode)
+
+    if strain == True:
+        draw_rect_alpha(screen, LightYellow, (0,0,1000,600))
     pg.display.flip()                                                                           #updates display
 pg.quit()                                                                                       #quits game
